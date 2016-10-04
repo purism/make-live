@@ -1,0 +1,103 @@
+#!/bin/bash -e
+
+# some fancy colors
+if [ $(tty -s) ]; then
+    RED=$(tput setaf 1)
+    BRIGHT=$(tput bold)
+    NORMAL=$(tput sgr0)
+else
+    RED=
+    BRIGHT=
+    NORMAL=
+fi
+
+# current architecture
+arch=$(dpkg --print-architecture)
+
+# options
+lb_opts=""
+dist="green"
+dist_version="3.0"
+dist_reltag=""
+
+# live-build doesn't work if --parent-debian-distribution is unknown of
+# debian-cd => we have to put a symlink so that it deals with Tanglu like jessie/sid
+if [ ! -e "/usr/share/live/build/data/debian-cd/$dist" ]; then
+  if [ -w /usr/share/live/build/data/debian-cd ]; then
+    ln -sf sid "/usr/share/live/build/data/debian-cd/$dist"
+  else
+    echo "ERROR: Run this first:"
+    echo "ln -sf sid /usr/share/live/build/data/debian-cd/$dist"
+    exit 1
+  fi
+fi
+
+# Debian-installer config
+debian_installer_opts="--debian-installer-gui true --debian-installer-distribution $dist"
+
+case "$arch" in
+  amd64)
+    debian_installer_opts="$debian_installer_opts --debian-installer live"
+  ;;
+  i386)
+    debian_installer_opts="$debian_installer_opts --debian-installer live --linux-flavours 686-pae"
+  ;;
+  *)
+    echo "WARNING: configuration not tested on arch $arch" >&2
+  ;;
+esac
+# add installer opts to lb config call
+lb_opts="$lb_opts $debian_installer_opts"
+
+# create some directories which we will need later
+mkdir -p config/package-lists
+mkdir -p config/includes.chroot
+
+lb_opts="$lb_opts --security false --updates false"
+
+# FIXME: should be fixed in the live-build autodetection
+case "$arch" in
+  amd64)
+    kernel_flavour="amd64"
+  ;;
+  i386)
+    kernel_flavour="686-pae"
+  ;;
+  *)
+    echo "WARNING: configuration not tested on arch $arch" >&2
+  ;;
+esac
+
+# create package config
+cat > config/package-lists/desktop.list.chroot <<EOF
+task-gnome-desktop
+linux-image-$kernel_flavour
+xserver-xorg-legacy
+EOF
+
+IMAGE_FILENAME=pureos-$dist_version-live
+
+lb config noauto \
+    --distribution "$dist" \
+    --binary-images iso-hybrid \
+    --archive-areas "main" \
+    --mirror-bootstrap http://dak.puri.sm/pureos \
+    --mirror-binary http://dak.puri.sm/pureos \
+    --mirror-debian-installer http://dak.puri.sm/pureos \
+    --parent-mirror-bootstrap http://dak.puri.sm/pureos \
+    --parent-mirror-binary http://dak.puri.sm/pureos \
+    --parent-mirror-debian-installer http://dak.puri.sm/pureos \
+    --apt-source-archives false \
+    --keyring-packages pureos-archive-keyring \
+    --bootloader syslinux \
+    --firmware-binary true \
+    --firmware-chroot true \
+    --initsystem systemd \
+    --iso-application "PureOS GNU/Linux" \
+    --iso-publisher "Purism" \
+    --iso-volume "PureOS $dist_version Live" \
+    --image-name $IMAGE_FILENAME \
+    --linux-flavours $kernel_flavour \
+    --debootstrap-options --keyring=/usr/share/keyrings/pureos-archive-keyring.gpg \
+    $lb_opts \
+    "${@}"

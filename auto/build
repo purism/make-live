@@ -1,0 +1,7 @@
+#!/bin/sh
+
+export RELEASE_green="3.0"
+
+export DEBOOTSTRAP_OPTIONS="--keyring=/usr/share/keyrings/pureos-archive-keyring.gpg"
+
+lb build noauto "${@}" 2>&1 | tee build.log
