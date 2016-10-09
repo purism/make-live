@@ -11,6 +11,9 @@ else
     NORMAL=
 fi
 
+# repository URL
+PUREOS_REPO="http://repo.puri.sm/pureos"
+
 # current architecture
 arch=$(dpkg --print-architecture)
 
@@ -81,12 +84,12 @@ lb config noauto \
     --distribution "$dist" \
     --binary-images iso-hybrid \
     --archive-areas "main" \
-    --mirror-bootstrap http://dak.puri.sm/pureos \
-    --mirror-binary http://dak.puri.sm/pureos \
-    --mirror-debian-installer http://dak.puri.sm/pureos \
-    --parent-mirror-bootstrap http://dak.puri.sm/pureos \
-    --parent-mirror-binary http://dak.puri.sm/pureos \
-    --parent-mirror-debian-installer http://dak.puri.sm/pureos \
+    --mirror-bootstrap $PUREOS_REPO \
+    --mirror-binary $PUREOS_REPO \
+    --mirror-debian-installer $PUREOS_REPO \
+    --parent-mirror-bootstrap $PUREOS_REPO \
+    --parent-mirror-binary $PUREOS_REPO \
+    --parent-mirror-debian-installer $PUREOS_REPO \
     --apt-source-archives false \
     --keyring-packages pureos-archive-keyring \
     --bootloader syslinux \
