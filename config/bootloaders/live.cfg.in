@@ -1,0 +1,22 @@
+label live-@FLAVOUR@
+	menu label ^Start PureOS Live
+	menu default
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@
+
+label live-@FLAVOUR@-failsafe
+	menu label Start PureOS Live (^failsafe)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE_FAILSAFE@
+
+label installgui
+	menu label ^Install PureOS
+	linux /install/gtk/vmlinuz
+	initrd /install/gtk/initrd.gz
+	append video=vesa:ywrap,mtrr vga=788 @APPEND_INSTALL@ -- quiet
+
+label hd
+	menu label ^Boot from first hard disk
+	localboot 0x80

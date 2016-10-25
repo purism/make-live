@@ -78,6 +78,11 @@ linux-image-$kernel_flavour
 xserver-xorg-legacy
 EOF
 
+# Configure bootloader
+cp -f config/bootloaders/live.cfg.in config/bootloaders/isolinux/
+sed -e s/@VERSION@/"$VERSION_PRETTY"/g config/bootloaders/splash.svg.in > config/bootloaders/splash.svg
+mv -f config/bootloaders/splash.svg config/bootloaders/isolinux/
+
 IMAGE_FILENAME=pureos-$dist_version-live
 
 lb config noauto \
