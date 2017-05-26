@@ -75,8 +75,6 @@ esac
 cat > config/package-lists/desktop.list.chroot <<EOF
 pureos-desktop
 linux-image-$kernel_flavour
-xserver-xorg-legacy
-calamares
 EOF
 
 # Configure bootloader
