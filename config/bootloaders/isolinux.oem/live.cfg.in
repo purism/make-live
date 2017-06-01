@@ -1,0 +1,12 @@
+label live-@FLAVOUR@
+	menu label ^Install PureOS OEM and erase disk
+	menu default
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE@
+
+label live-@FLAVOUR@-failsafe
+	menu label Install PureOS OEM and erase disk (^failsafe)
+	linux @LINUX@
+	initrd @INITRD@
+	append @APPEND_LIVE_FAILSAFE@

@@ -11,6 +11,13 @@ else
     NORMAL=
 fi
 
+if [ -z "$FLAVOR" ]; then
+  FLAVOR="live"
+  echo "Using default flavor: $FLAVOR"
+else
+  echo "Using flavor: $FLAVOR"
+fi
+
 # repository URL
 PUREOS_REPO="http://repo.puri.sm/pureos"
 
@@ -22,6 +29,8 @@ lb_opts=""
 dist="green"
 dist_version="3.0"
 dist_reltag=""
+
+VERSION_PRETTY=$dist_version
 
 # live-build doesn't work if --parent-debian-distribution is unknown of
 # debian-cd => we have to put a symlink so that it deals with Tanglu like jessie/sid
@@ -71,7 +80,10 @@ case "$arch" in
   ;;
 esac
 
-# create package config
+case "$FLAVOR" in
+  "live"|"LIVE")
+    FLAVOR=live
+    # create package config
 cat > config/package-lists/desktop.list.chroot <<EOF
 pureos-desktop
 linux-image-$kernel_flavour
@@ -79,12 +91,40 @@ calamares
 grub-pc
 EOF
 
+  rm -f config/hooks/normal/004-setup-oem.hook.chroot
+  rm -rf config/includes.chroot
+
+  rm -rf config/bootloaders/isolinux
+  cp -r config/bootloaders/isolinux.live/ config/bootloaders/isolinux
+  cp -f config/bootloaders/live.cfg.in config/bootloaders/isolinux/
+  ;;
+
+  "oem")
+    FLAVOR=oem
+    # create package config
+cat > config/package-lists/desktop.list.chroot <<EOF
+pureos-minimal
+linux-image-$kernel_flavour
+grub-pc
+parted
+python3-parted
+EOF
+
+  rm -f config/hooks/normal/004-setup-oem.hook.chroot
+  cp config/oemhooks/004-setup-oem.hook.chroot config/hooks/normal/
+  rm -rf config/includes.chroot
+  cp -r config/includes.chroot.oem config/includes.chroot
+
+  rm -rf config/bootloaders/isolinux/
+  cp -r config/bootloaders/isolinux.oem config/bootloaders/isolinux
+  ;;
+esac
+
 # Configure bootloader
-cp -f config/bootloaders/live.cfg.in config/bootloaders/isolinux/
 sed -e s/@VERSION@/"$VERSION_PRETTY"/g config/bootloaders/splash.svg.in > config/bootloaders/splash.svg
 mv -f config/bootloaders/splash.svg config/bootloaders/isolinux/
 
-IMAGE_FILENAME=pureos-$dist_version-live
+IMAGE_FILENAME=pureos-$dist_version-$FLAVOR
 
 lb config noauto \
     --distribution "$dist" \
