@@ -27,7 +27,7 @@ arch=$(dpkg --print-architecture)
 # options
 lb_opts=""
 dist="green"
-dist_version="3.0"
+dist_version="8.0"
 dist_reltag=""
 
 VERSION_PRETTY=$dist_version
