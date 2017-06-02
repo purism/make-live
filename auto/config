@@ -83,6 +83,7 @@ esac
 case "$FLAVOR" in
   "live"|"LIVE")
     FLAVOR=live
+    FLAVOR_PRETTY=Live
     # create package config
 cat > config/package-lists/desktop.list.chroot <<EOF
 pureos-desktop
@@ -101,6 +102,7 @@ EOF
 
   "oem")
     FLAVOR=oem
+    FLAVOR_PRETTY=OEM
     # create package config
 cat > config/package-lists/desktop.list.chroot <<EOF
 pureos-minimal
@@ -144,7 +146,7 @@ lb config noauto \
     --initsystem systemd \
     --iso-application "PureOS GNU/Linux" \
     --iso-publisher "Purism" \
-    --iso-volume "PureOS $dist_version Live" \
+    --iso-volume "PureOS $dist_version $FLAVOR_PRETTY" \
     --image-name $IMAGE_FILENAME \
     --linux-flavours $kernel_flavour \
     --debootstrap-options --keyring=/usr/share/keyrings/pureos-archive-keyring.gpg \
