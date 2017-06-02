@@ -74,8 +74,9 @@ class LibremDiskDevice(object):
         disk = parted.freshDisk(device, 'msdos')
         self.logger.debug('created %s', disk)
 
-        # create the rescue disk partition
-        partition_size = round((math.pow(1024.0, parted._exponent['gb']) * 2) / (device.sectorSize)) # 2 GB
+        # create the rescue disk partition - the size has been chosen to d-i's liking, so
+        # it doesn't attempt to truncate or override the partition
+        partition_size = round(2099249152 / (device.sectorSize)) # 2 GB
         self._new_partition(device, disk, 1, partition_size, True)
 
         disk.commit()
