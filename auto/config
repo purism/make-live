@@ -113,7 +113,7 @@ python3-parted
 EOF
 
   rm -f config/hooks/normal/004-setup-oem.hook.chroot
-  cp config/oemhooks/004-setup-oem.hook.chroot config/hooks/normal/
+  cp config/hooks.oem/004-setup-oem.hook.chroot config/hooks/normal/
   rm -rf config/includes.chroot
   cp -r config/includes.chroot.oem config/includes.chroot
 
