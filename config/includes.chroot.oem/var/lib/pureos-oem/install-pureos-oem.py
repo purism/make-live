@@ -77,7 +77,7 @@ class LibremDiskDevice(object):
         # create the rescue disk partition - the size has been chosen to d-i's liking, so
         # it doesn't attempt to truncate or override the partition
         partition_size = round(2099249152 / (device.sectorSize)) # 2 GB
-        self._new_partition(device, disk, 1, partition_size, True)
+        self._new_partition(device, disk, 2048, partition_size, True) # 2048 padding is required to make d-i not override the rescue partition
 
         disk.commit()
 
