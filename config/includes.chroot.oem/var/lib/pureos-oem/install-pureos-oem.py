@@ -82,9 +82,8 @@ class LibremDiskDevice(object):
         disk.commit()
 
         # for some reason, parted doesn't format this on its own, so we do it
-        check_call(['mkfs.ext4', '/dev/sda1'])
-        #check_call(['mkfs.ext4', '/dev/sda2'])
-        check_call(['e2label', '/dev/sda1', 'rescue'])
+        check_call(['mkfs.ext4', self.path + '-part1'])
+        check_call(['e2label', self.path + '-part1', 'rescue'])
 
     def wipe_dev(self, dev_path):
         """
@@ -115,6 +114,27 @@ def pureos_oem_setup():
     OEM_DATA_PATH = '/var/lib/pureos-oem/'
     logger = getLogger(__name__)
 
+    # find our main hard disk
+    all_disk_paths = glob('/dev/disk/by-id/*')
+
+    disk_path = None
+    for d in all_disk_paths:
+        # exclude USB devices
+        if d.startswith('/dev/disk/by-id/usb-'):
+            continue
+        # exclude partitions
+        if '-part' in d:
+            continue
+        # exclude optical disks
+        if os.path.realpath(d).startswith('/dev/sr'):
+            continue
+        disk_path = d
+        break
+
+    if not disk_path:
+        logger.error('No hard disk found on this system!')
+        return 1
+
     # create the new partition and format it
     libremhdd = LibremDiskDevice(disk_path)
     libremhdd.wipe()
@@ -127,7 +147,7 @@ def pureos_oem_setup():
         os.makedirs(target)
     except:
         pass
-    check_call(['mount', '/dev/sda1', target])
+    check_call(['mount', disk_path + '-part1', target])
 
     # copy PureOS image files and d-i
     logger.info('Copying PureOS install files...')
@@ -148,7 +168,7 @@ def pureos_oem_setup():
     shutil.copy(os.path.join(OEM_DATA_PATH, 'grub', 'loopback.cfg'), grub_dir)
 
     logger.info('Installing GRUB...')
-    check_call(['grub-install', '/dev/sda', '--boot-directory=%s' % (boot_dir)])
+    check_call(['grub-install', disk_path, '--boot-directory=%s' % (boot_dir)])
 
     check_call(['umount', target])
     logger.info('Done.')
@@ -157,13 +177,16 @@ def pureos_oem_setup():
     if not shutdown.strip() or shutdown.lower() == 'y':
         check_call(['systemctl', 'poweroff'])
 
+    return 0
+
 
 if __name__ == '__main__':
-    disk_path = '/dev/sda'
+    import sys
 
     # Set up a logger for nice visibility.
     logger = getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     logger.addHandler(_ConsoleHandler())
 
-    pureos_oem_setup()
+    r = pureos_oem_setup()
+    sys.exit(r)
