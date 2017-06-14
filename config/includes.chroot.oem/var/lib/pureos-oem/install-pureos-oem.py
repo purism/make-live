@@ -81,7 +81,10 @@ class LibremDiskDevice(object):
 
         disk.commit()
 
-        # for some reason, parted doesn't format this on its own, so we do it
+        # wait for device nodes
+        check_call(['udevadm', 'settle'])
+
+        # create file system and labels
         check_call(['mkfs.ext4', self.path + '-part1'])
         check_call(['e2label', self.path + '-part1', 'rescue'])
 
