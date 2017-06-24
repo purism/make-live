@@ -113,6 +113,22 @@ class LibremDiskDevice(object):
         self.wipe_dev(self.path)
 
 
+def configure_di_preseed(template_fname, dest_fname, target_disk):
+    """
+    Replace variables in a debian-installer preseed file and safe the result
+    under a new name.
+    """
+
+    contents = None
+    with open(template_fname, 'r') as f:
+        contents = f.read()
+
+    contents = contents.replace('%TARGET_DISK%', target_disk)
+
+    with open(dest_fname, 'w') as f:
+        f.write(contents)
+
+
 def pureos_oem_setup():
     OEM_DATA_PATH = '/var/lib/pureos-oem/'
     logger = getLogger(__name__)
@@ -157,7 +173,11 @@ def pureos_oem_setup():
     shutil.copy(os.path.join(OEM_DATA_PATH, 'pureos.iso'), target)
     shutil.copy(os.path.join(OEM_DATA_PATH, 'initrd.gz'), target)
     shutil.copy(os.path.join(OEM_DATA_PATH, 'vmlinuz'), target)
-    shutil.copy(os.path.join(OEM_DATA_PATH, 'di-preseed.cfg'), target)
+
+    # configure & install preseed
+    configure_di_preseed(os.path.join(OEM_DATA_PATH, 'di-preseed.cfg.in'),
+                         os.path.join(target, 'di-preseed.cfg'),
+                         target_disk=disk_path)
 
     # set up GRUB
     logger.info('Creating GRUB configuration...')

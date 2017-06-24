@@ -26,7 +26,7 @@ d-i pkgsel/install-language-support boolean false
 d-i pkgsel/update-policy select none
 
 d-i partman/default_filesystem string ext4
-d-i partman-auto/disk string /dev/sda
+d-i partman-auto/disk string %TARGET_DISK%
 d-i partman-lvm/device_remove_lvm boolean true
 d-i partman-md/device_remove_md boolean true
 d-i partman-lvm/confirm boolean true
@@ -77,7 +77,7 @@ d-i hw-detect/load_firmware boolean false
 
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/with_other_os boolean true
-d-i grub-installer/choose_bootdev string /dev/sda
+d-i grub-installer/choose_bootdev string %TARGET_DISK%
 d-i finish-install/reboot_in_progress note
 
 #grub-pc ucf/changeprompt string install the package maintainer's version
