@@ -208,7 +208,11 @@ if __name__ == '__main__':
 
     # Set up a logger for nice visibility.
     logger = getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+
+    if os.environ.get('DEBUG'):
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
     logger.addHandler(_ConsoleHandler())
 
     r = pureos_oem_setup()
