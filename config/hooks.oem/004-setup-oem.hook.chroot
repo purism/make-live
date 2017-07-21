@@ -9,8 +9,8 @@ cd $OEM_DIR
 apt install -y ca-certificates
 
 # d-i components
-wget http://repo.pureos.net/pureos/dists/green/main/installer-amd64/20170525pureos3/images/hd-media/gtk/initrd.gz
-wget http://repo.pureos.net/pureos/dists/green/main/installer-amd64/20170525pureos3/images/hd-media/gtk/vmlinuz
+wget http://repo.pureos.net/pureos/dists/green/main/installer-amd64/current/images/hd-media/gtk/initrd.gz
+wget http://repo.pureos.net/pureos/dists/green/main/installer-amd64/current/images/hd-media/gtk/vmlinuz
 
 # PureOS image
-wget --progress=dot:giga -O pureos.iso https://downloads.puri.sm/snapshots/2017-06-12/pureos-8.0-live-amd64.hybrid.iso
+wget --progress=dot:giga -O pureos.iso https://downloads.puri.sm/snapshots/2017-07-21/pureos-8.0-live-amd64.hybrid.iso
