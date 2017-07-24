@@ -25,10 +25,6 @@ class _ConsoleHandler(logging.StreamHandler):
 
 
 class LibremDiskDevice(object):
-    """
-    A simple model of a block storage device that wraps up some examples of
-    pyparted capabilities.
-    """
 
     def __init__(self, path):
         """
@@ -64,9 +60,10 @@ class LibremDiskDevice(object):
 
         return partition
 
-    def partition(self):
+    def partition_primary_disk(self):
         """
-        Create a partition table on the block device.
+        Create a partition table on the block device for the installer
+        image (rescue disk).
         """
         self.logger.info('Creating partitions')
         device = parted.getDevice(self.path)
@@ -87,6 +84,27 @@ class LibremDiskDevice(object):
         # create file system and labels
         check_call(['mkfs.ext4', self.path + '-part1'])
         check_call(['e2label', self.path + '-part1', 'rescue'])
+
+    def partition_secondary_disk(self):
+        """
+        Format the whole disk for immediate use.
+        TODO: We maybe want to tell d-i to encrypt additional partitions as well,
+        if they are present.
+        """
+        self.logger.info('Creating partition on additional disk...')
+        device = parted.getDevice(self.path)
+        self.logger.debug('created %s', device)
+        disk = parted.freshDisk(device, 'msdos')
+        self.logger.debug('created %s', disk)
+
+        self._new_partition(device, disk, start=1, length=device.getLength() - 1)
+        disk.commit()
+
+        # wait for device nodes
+        check_call(['udevadm', 'settle'])
+
+        # create file system and labels
+        check_call(['mkfs.ext4', self.path + '-part1'])
 
     def wipe_dev(self, dev_path):
         """
@@ -136,7 +154,7 @@ def pureos_oem_setup():
     # find our main hard disk
     all_disk_paths = glob('/dev/disk/by-id/*')
 
-    disk_path = None
+    local_disks = []
     for d in all_disk_paths:
         # exclude USB devices
         if d.startswith('/dev/disk/by-id/usb-'):
@@ -147,26 +165,45 @@ def pureos_oem_setup():
         # exclude optical disks
         if os.path.realpath(d).startswith('/dev/sr'):
             continue
-        disk_path = d
+        local_disks.append(d)
         break
 
-    if not disk_path:
+    if not local_disks:
         logger.error('No hard disk found on this system!')
         return 1
 
+    # urgh... - there are better ways to detect whether a disk is an SSD,
+    # but none of them worked reliably enough.
+    # So we add this hack here (which we hopefully can remove at some point)
+    inst_disk_path = local_disks[0]
+    for d in local_disks:
+        if '_ssd_' in d.lower():
+            inst_disk_path = d
+            break
+
     # create the new partition and format it
-    libremhdd = LibremDiskDevice(disk_path)
+    logger.info('Partitioning primary disk...')
+    libremhdd = LibremDiskDevice(inst_disk_path)
     libremhdd.wipe()
-    libremhdd.partition()
+    libremhdd.partition_primary_disk()
+
+    if len(local_disks) > 1:
+        for dpath in local_disks:
+            if dpath == inst_disk_path:
+                continue
+            logger.info('Partitioning secondary disk "{}"...'.format(dpath))
+            extrahdd = LibremDiskDevice(inst_disk_path)
+            extrahdd.wipe()
+            extrahdd.partition_secondary_disk()
 
     # mount the setup disk
-    logger.info('Mounting setup disk...')
+    logger.info('Mounting main disk...')
     target = os.path.join(OEM_DATA_PATH, 'target')
     try:
         os.makedirs(target)
     except:
         pass
-    check_call(['mount', disk_path + '-part1', target])
+    check_call(['mount', inst_disk_path + '-part1', target])
 
     # copy PureOS image files and d-i
     logger.info('Copying PureOS install files...')
@@ -177,7 +214,7 @@ def pureos_oem_setup():
     # configure & install preseed
     configure_di_preseed(os.path.join(OEM_DATA_PATH, 'di-preseed.cfg.in'),
                          os.path.join(target, 'di-preseed.cfg'),
-                         target_disk=disk_path)
+                         target_disk=inst_disk_path)
 
     # set up GRUB
     logger.info('Creating GRUB configuration...')
@@ -191,7 +228,7 @@ def pureos_oem_setup():
     shutil.copy(os.path.join(OEM_DATA_PATH, 'grub', 'loopback.cfg'), grub_dir)
 
     logger.info('Installing GRUB...')
-    check_call(['grub-install', disk_path, '--boot-directory=%s' % (boot_dir)])
+    check_call(['grub-install', inst_disk_path, '--boot-directory=%s' % (boot_dir)])
 
     check_call(['umount', target])
     logger.info('Done.')
