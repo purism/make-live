@@ -24,13 +24,19 @@ class _ConsoleHandler(logging.StreamHandler):
         )
 
 
+class DiskPath:
+    def __init__(self, id_alias, dev_path):
+        self.id_alias = id_alias
+        self.dev_path = dev_path
+
+
 class LibremDiskDevice(object):
 
-    def __init__(self, path):
+    def __init__(self, disk):
         """
         Initialize the ExampleDevice object.
         """
-        self.path = path
+        self.path = disk.dev_path
         self.logger = getLogger(__name__)
 
     @property
@@ -154,7 +160,8 @@ def pureos_oem_setup():
     # find our main hard disk
     all_disk_paths = glob('/dev/disk/by-id/*')
 
-    local_disks = []
+    # we use a dictionary for deduplication
+    local_disks_map = {}
     for d in all_disk_paths:
         # exclude USB devices
         if d.startswith('/dev/disk/by-id/usb-'):
@@ -165,53 +172,49 @@ def pureos_oem_setup():
         # exclude optical disks
         if os.path.realpath(d).startswith('/dev/sr'):
             continue
-        local_disks.append(d)
+
+        # resolve alias links to direct /dev nodes
+        # we need the real path, as sometimes udev does create different names
+        # when running in d-i
+        dev_path = os.path.realpath(d)
+
+        disk = DiskPath(id_alias=d, dev_path=dev_path)
+        local_disks_map[dev_path] = disk
         break
 
-    if not local_disks:
+    if not local_disks_map:
         logger.error('No hard disk found on this system!')
         return 1
+
+    # get a (deduplicated) list of disks
+    local_disks = list(local_disks_map.values())
 
     # urgh... - there are better ways to detect whether a disk is an SSD,
     # but none of them worked reliably enough.
     # So we add this hack here (which we hopefully can remove at some point)
-    primary_disk_path = local_disks[0]
-    for d in local_disks:
-        if '_ssd_' in d.lower():
-            primary_disk_path = d
-        if 'nvme' in d.lower():
-            primary_disk_path = d
+    primary_disk = local_disks[0]
+    for disk in local_disks:
+        if '_ssd_' in disk.id_alias.lower():
+            primary_disk = d
+        if 'nvme' in disk.id_alias.lower():
+            primary_disk = d
             break
 
-    # resolve to node in /dev
-    primary_disk_path = os.path.realpath(primary_disk_path)
-
-    # resolve alias links to direct /dev nodes
-    # we need the real path, as sometimes udev does create different names
-    # when running in d-i
-    real_local_disks = set()
-    for d in local_disks:
-        dpath = os.path.realpath(d)
-        real_local_disks.update(dpath)
-
-    # we do only want to use the resolved names from now on
-    local_disks = list(real_local_disks)
-
-    logger.info('Found disks: {}'.format(str(local_disks)))
-    logger.info('Determined primary disk: {}'.format(primary_disk_path))
+    logger.info('Found disks: {}'.format(str([d.id_alias for d in local_disks])))
+    logger.info('Determined primary disk: {}'.format(primary_disk))
 
     # create the new partition and format it
     logger.info('Partitioning primary disk...')
-    libremhdd = LibremDiskDevice(primary_disk_path)
+    libremhdd = LibremDiskDevice(primary_disk)
     libremhdd.wipe()
     libremhdd.partition_primary_disk()
 
     if len(local_disks) > 1:
         for dpath in local_disks:
-            if dpath == primary_disk_path:
+            if dpath == primary_disk:
                 continue
             logger.info('Partitioning secondary disk "{}"...'.format(dpath))
-            extrahdd = LibremDiskDevice(primary_disk_path)
+            extrahdd = LibremDiskDevice(primary_disk)
             extrahdd.wipe()
             extrahdd.partition_secondary_disk()
 
@@ -222,7 +225,7 @@ def pureos_oem_setup():
         os.makedirs(target)
     except:
         pass
-    check_call(['mount', primary_disk_path + '-part1', target])
+    check_call(['mount', primary_disk.id_alias + '-part1', target])
 
     # copy PureOS image files and d-i
     logger.info('Copying PureOS install files...')
@@ -233,7 +236,7 @@ def pureos_oem_setup():
     # configure & install preseed
     configure_di_preseed(os.path.join(OEM_DATA_PATH, 'di-preseed.cfg.in'),
                          os.path.join(target, 'di-preseed.cfg'),
-                         target_disk=primary_disk_path)
+                         target_disk=primary_disk.dev_path)
 
     # set up GRUB
     logger.info('Creating GRUB configuration...')
@@ -247,7 +250,7 @@ def pureos_oem_setup():
     shutil.copy(os.path.join(OEM_DATA_PATH, 'grub', 'loopback.cfg'), grub_dir)
 
     logger.info('Installing GRUB...')
-    check_call(['grub-install', primary_disk_path, '--boot-directory=%s' % (boot_dir)])
+    check_call(['grub-install', primary_disk.dev_path, '--boot-directory=%s' % (boot_dir)])
 
     check_call(['umount', target])
     logger.info('Done.')
