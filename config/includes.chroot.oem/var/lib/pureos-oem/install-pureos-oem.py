@@ -179,6 +179,8 @@ def pureos_oem_setup():
     for d in local_disks:
         if '_ssd_' in d.lower():
             primary_disk_path = d
+        if 'nvme' in d.lower():
+            primary_disk_path = d
             break
 
     # resolve to node in /dev
