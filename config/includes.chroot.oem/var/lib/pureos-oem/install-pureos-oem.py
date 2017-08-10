@@ -36,7 +36,7 @@ class LibremDiskDevice(object):
         """
         Initialize the ExampleDevice object.
         """
-        self.path = disk.dev_path
+        self.path = disk.id_alias
         self.logger = getLogger(__name__)
 
     @property
