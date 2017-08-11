@@ -29,6 +29,12 @@ class DiskPath:
         self.id_alias = id_alias
         self.dev_path = dev_path
 
+    def __repr__(self):
+        dname = '???'
+        if self.id_alias:
+            dname = os.path.basename(self.id_alias)
+        return '{} ({})'.format(dname, self.dev_path)
+
 
 class LibremDiskDevice(object):
 
