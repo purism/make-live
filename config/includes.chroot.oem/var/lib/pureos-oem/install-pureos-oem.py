@@ -94,7 +94,7 @@ class LibremDiskDevice(object):
         check_call(['udevadm', 'settle'])
 
         # create file system and labels
-        check_call(['mkfs.ext4', self.path + '-part1'])
+        check_call(['mkfs.ext4', '-F', self.path + '-part1'])
         check_call(['e2label', self.path + '-part1', 'rescue'])
 
     def partition_secondary_disk(self):
@@ -116,7 +116,7 @@ class LibremDiskDevice(object):
         check_call(['udevadm', 'settle'])
 
         # create file system and labels
-        check_call(['mkfs.ext4', self.path + '-part1'])
+        check_call(['mkfs.ext4', '-F', self.path + '-part1'])
 
     def wipe_dev(self, dev_path):
         """
@@ -270,6 +270,13 @@ def pureos_oem_setup():
 
 if __name__ == '__main__':
     import sys
+
+    print('Do you really want to continue installing the OEM image?')
+    run_oem = input('/!\ THIS WILL ERASE THE CONTENTS OF ALL DISKS FOUND IN THIS DEVICE [Y/n]')
+    if run_oem.strip.lower() != 'y' and run_oem.strip():
+        print('Installation cancelled. Rebooting.')
+        check_call(['systemctl', 'reboot'])
+        sys.exit(0)
 
     # Set up a logger for nice visibility.
     logger = getLogger(__name__)
