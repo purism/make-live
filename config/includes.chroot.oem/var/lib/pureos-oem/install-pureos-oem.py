@@ -273,7 +273,7 @@ if __name__ == '__main__':
 
     print('Do you really want to continue installing the OEM image?')
     run_oem = input('/!\ THIS WILL ERASE THE CONTENTS OF ALL DISKS FOUND IN THIS DEVICE [Y/n]')
-    if run_oem.strip.lower() != 'y' and run_oem.strip():
+    if run_oem.strip().lower() != 'y' and run_oem.strip():
         print('Installation cancelled. Rebooting.')
         check_call(['systemctl', 'reboot'])
         sys.exit(0)
