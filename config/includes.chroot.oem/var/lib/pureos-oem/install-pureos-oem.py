@@ -175,18 +175,18 @@ def pureos_oem_setup():
         # exclude partitions
         if '-part' in d:
             continue
-        # exclude optical disks
-        if os.path.realpath(d).startswith('/dev/sr'):
-            continue
 
         # resolve alias links to direct /dev nodes
         # we need the real path, as sometimes udev does create different names
         # when running in d-i
         dev_path = os.path.realpath(d)
 
+        # exclude optical disks
+        if dev_path.startswith('/dev/sr'):
+            continue
+
         disk = DiskPath(id_alias=d, dev_path=dev_path)
         local_disks_map[dev_path] = disk
-        break
 
     if not local_disks_map:
         logger.error('No hard disk found on this system!')
@@ -201,9 +201,9 @@ def pureos_oem_setup():
     primary_disk = local_disks[0]
     for disk in local_disks:
         if '_ssd_' in disk.id_alias.lower():
-            primary_disk = d
+            primary_disk = disk
         if 'nvme' in disk.id_alias.lower():
-            primary_disk = d
+            primary_disk = disk
             break
 
     logger.info('Found disks: {}'.format(str([d.id_alias for d in local_disks])))
@@ -216,11 +216,11 @@ def pureos_oem_setup():
     libremhdd.partition_primary_disk()
 
     if len(local_disks) > 1:
-        for dpath in local_disks:
-            if dpath == primary_disk:
+        for sdisk in local_disks:
+            if sdisk == primary_disk:
                 continue
-            logger.info('Partitioning secondary disk "{}"...'.format(dpath))
-            extrahdd = LibremDiskDevice(primary_disk)
+            logger.info('Partitioning secondary disk "{}"...'.format(sdisk))
+            extrahdd = LibremDiskDevice(sdisk)
             extrahdd.wipe()
             extrahdd.partition_secondary_disk()
 
@@ -271,6 +271,7 @@ def pureos_oem_setup():
 if __name__ == '__main__':
     import sys
 
+    print('')
     print('Do you really want to continue installing the OEM image?')
     run_oem = input('/!\ THIS WILL ERASE THE CONTENTS OF ALL DISKS FOUND IN THIS DEVICE [Y/n]')
     if run_oem.strip().lower() != 'y' and run_oem.strip():
