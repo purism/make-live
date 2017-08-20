@@ -13,4 +13,4 @@ wget http://repo.pureos.net/pureos/dists/green/main/installer-amd64/current/imag
 wget http://repo.pureos.net/pureos/dists/green/main/installer-amd64/current/images/hd-media/gtk/vmlinuz
 
 # PureOS image
-wget --progress=dot:giga -O pureos.iso https://downloads.puri.sm/snapshots/2017-08-19/pureos-8.0-live-amd64.hybrid.iso
+wget --progress=dot:giga -O pureos.iso https://downloads.puri.sm/snapshots/2017-08-20/pureos-8.0-live-amd64.hybrid.iso
