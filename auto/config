@@ -19,7 +19,7 @@ else
 fi
 
 # repository URL
-PUREOS_REPO="http://repo.puri.sm/pureos"
+PUREOS_REPO="https://repo.puri.sm/pureos"
 
 # current architecture
 arch=$(dpkg --print-architecture)

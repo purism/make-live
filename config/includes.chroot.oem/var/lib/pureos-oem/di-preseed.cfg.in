@@ -86,5 +86,5 @@ d-i finish-install/reboot_in_progress note
 d-i preseed/late_command string cp /cdrom/purism/50_custom /target/etc/grub.d/50_custom; \
   chmod a+x /target/etc/grub.d/50_custom; \
   echo "GRUB_DISABLE_OS_PROBER=true" >> /target/etc/default/grub; \
-  echo -e "#\n\ndeb http://repo.puri.sm/pureos/ green main" > /target/etc/apt/sources.list; \
+  echo -e "#\n\ndeb https://repo.puri.sm/pureos/ green main" > /target/etc/apt/sources.list; \
   in-target update-grub;
