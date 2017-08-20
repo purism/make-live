@@ -109,7 +109,7 @@ class LibremDiskDevice(object):
         disk = parted.freshDisk(device, 'msdos')
         self.logger.debug('created %s', disk)
 
-        self._new_partition(device, disk, start=1, length=device.getLength() - 1)
+        self._new_partition(device, disk, start=2048, length=device.getLength() - 2048)
         disk.commit()
 
         # wait for device nodes
@@ -159,7 +159,7 @@ def configure_di_preseed(template_fname, dest_fname, target_disk):
         f.write(contents)
 
 
-def pureos_oem_setup():
+def pureos_oem_setup(guess_fastest_system_disk=False):
     OEM_DATA_PATH = '/var/lib/pureos-oem/'
     logger = getLogger(__name__)
 
@@ -199,12 +199,13 @@ def pureos_oem_setup():
     # but none of them worked reliably enough.
     # So we add this hack here (which we hopefully can remove at some point)
     primary_disk = local_disks[0]
-    for disk in local_disks:
-        if '_ssd_' in disk.id_alias.lower():
-            primary_disk = disk
-        if 'nvme' in disk.id_alias.lower():
-            primary_disk = disk
-            break
+    if guess_fastest_system_disk:
+        for disk in local_disks:
+            if '_ssd_' in disk.id_alias.lower():
+                primary_disk = disk
+            if 'nvme' in disk.id_alias.lower():
+                primary_disk = disk
+                break
 
     logger.info('Found disks: {}'.format(str([d.id_alias for d in local_disks])))
     logger.info('Determined primary disk: {}'.format(primary_disk))
@@ -288,5 +289,9 @@ if __name__ == '__main__':
         logger.setLevel(logging.INFO)
     logger.addHandler(_ConsoleHandler())
 
-    r = pureos_oem_setup()
+    print('')
+    guess_system_disk_str = input('Use heuristics to determine the fastest disk as system disk? [y/N]')
+    guess_system_disk = guess_system_disk_str.strip().lower() == 'y'
+
+    r = pureos_oem_setup(guess_fastest_system_disk=guess_system_disk)
     sys.exit(r)
