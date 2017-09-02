@@ -206,6 +206,23 @@ def pureos_oem_setup(guess_fastest_system_disk=False):
             if 'nvme' in disk.id_alias.lower():
                 primary_disk = disk
                 break
+    else:
+        # try to determine which disk is first by BIOS boot order (this is also just a lucky guess)
+        pdisks = sorted(glob('/dev/disk/by-path/*'))
+
+        # pdisks also contains unsuitable disks, like the USB drive we are installing from, so
+        # we need to go through the whole list.
+        # a very inefficient and sometimes ineffective way to guess the first disk name...
+        for pdisk in pdisks:
+            first_disk = os.path.realpath(pdisk)
+            disk_found = False
+            for disk in local_disks:
+                if disk.dev_path == first_disk:
+                    primary_disk = disk
+                    disk_found = True
+                    break
+            if disk_found:
+                break
 
     logger.info('Found disks: {}'.format(str([d.id_alias for d in local_disks])))
     logger.info('Determined primary disk: {}'.format(primary_disk))
