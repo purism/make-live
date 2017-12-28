@@ -225,7 +225,36 @@ def pureos_oem_setup(guess_fastest_system_disk=False):
                 break
 
     logger.info('Found disks: {}'.format(str([d.id_alias for d in local_disks])))
-    logger.info('Determined primary disk: {}'.format(primary_disk))
+    logger.info('Automatically determined primary disk: {}'.format(primary_disk))
+
+    # allow manual disk selection if we have multiple disks installed
+    manual_disk_selection = False
+    if not guess_fastest_system_disk:
+        if len(local_disks) > 1:
+            manual_disk_selection_str = input('Select primary (install target) disk manually? [y/N]')
+            manual_disk_selection = manual_disk_selection_str.strip().lower() == 'y'
+    if manual_disk_selection:
+        print('')
+        print('Disks found:')
+        for i, disk in enumerate(local_disks):
+            print('[{}] {}'.format(i, disk))
+        print('')
+
+        while True:
+            disk_index_str = input('Primary disk number [int]:')
+            try:
+                disk_index = int(disk_index_str)
+            except (ValueError, TypeError):
+                logger.error('Expected an integer')
+                continue
+            if disk_index >= len(local_disks):
+                logger.error('Expected an integer between 0 and {}'.format(len(local_disks)-1))
+                continue
+            primary_disk = local_disks[disk_index]
+            break
+
+        # the final primary disk
+        logger.info('User defined primary disk: {}'.format(primary_disk))
 
     # create the new partition and format it
     logger.info('Partitioning primary disk...')
