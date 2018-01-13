@@ -12,11 +12,14 @@ else
 fi
 
 if [ -z "$FLAVOR" ]; then
-  FLAVOR="live"
+  FLAVOR="gnome-live"
   echo "Using default flavor: $FLAVOR"
 else
   echo "Using flavor: $FLAVOR"
 fi
+
+UI_TYPE=$(echo $FLAVOR | cut -f1 -d-)
+IMAGE_TYPE=$(echo $FLAVOR | cut -f2 -d-)
 
 # repository URL
 PUREOS_REPO="https://repo.puri.sm/pureos"
@@ -80,7 +83,7 @@ case "$arch" in
   ;;
 esac
 
-case "$FLAVOR" in
+case "$IMAGE_TYPE" in
   "live"|"LIVE")
     FLAVOR=live
     FLAVOR_PRETTY=Live
