@@ -21,6 +21,8 @@ fi
 UI_TYPE=$(echo $FLAVOR | cut -f1 -d-)
 IMAGE_TYPE=$(echo $FLAVOR | cut -f2 -d-)
 
+CURRENT_DATE=$(date +%Y%m%d)
+
 # repository URL
 PUREOS_REPO="https://repo.puri.sm/pureos"
 
@@ -129,7 +131,7 @@ esac
 sed -e s/@VERSION@/"$VERSION_PRETTY"/g config/bootloaders/splash.svg.in > config/bootloaders/splash.svg
 mv -f config/bootloaders/splash.svg config/bootloaders/isolinux/
 
-IMAGE_FILENAME=pureos-$dist_version-$FLAVOR
+IMAGE_FILENAME=pureos-${dist_version}-${FLAVOR}_${CURRENT_DATE}
 
 lb config noauto \
     --distribution "$dist" \
