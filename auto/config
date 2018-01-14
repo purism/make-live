@@ -77,6 +77,9 @@ case "$arch" in
   amd64)
     kernel_flavour="amd64"
   ;;
+  arm64)
+    kernel_flavour="arm64"
+  ;;
   i386)
     kernel_flavour="686-pae"
   ;;
@@ -87,28 +90,48 @@ esac
 
 case "$IMAGE_TYPE" in
   "live"|"LIVE")
-    FLAVOR=live
-    FLAVOR_PRETTY=Live
-    # create package config
-cat > config/package-lists/desktop.list.chroot <<EOF
-pureos-desktop
+
+    case "$UI_TYPE" in
+      "gnome"|"GNOME")
+        FLAVOR=gnome-live
+        FLAVOR_PRETTY="GNOME Live"
+        # create package config for GNOME
+        cat > config/package-lists/desktop.list.chroot <<EOF
+pureos-gnome
 linux-image-$kernel_flavour
 calamares
 grub-pc
 EOF
+      ;;
 
-  rm -f config/hooks/normal/004-setup-oem.hook.chroot
-  rm -rf config/includes.chroot
+      "plasma")
+        FLAVOR=plasma-live
+        FLAVOR_PRETTY="KDE Plasma Live"
+        # create package config for KDE Plasma
+        cat > config/package-lists/desktop.list.chroot <<EOF
+pureos-plasma
+linux-image-$kernel_flavour
+calamares
+grub-pc
+EOF
+      ;;
+    esac
 
-  rm -rf config/bootloaders/isolinux
-  cp -r config/bootloaders/isolinux.live/ config/bootloaders/isolinux
-  cp -f config/bootloaders/live.cfg.in config/bootloaders/isolinux/
+    rm -f config/hooks/normal/004-setup-oem.hook.chroot
+    rm -rf config/includes.chroot
+
+    rm -rf config/bootloaders/isolinux
+    cp -r config/bootloaders/isolinux.live/ config/bootloaders/isolinux
+    cp -f config/bootloaders/live.cfg.in config/bootloaders/isolinux/
   ;;
 
   "oem")
-    FLAVOR=oem
-    FLAVOR_PRETTY=OEM
-    # create package config
+
+    case "$UI_TYPE" in
+      "gnome"|"GNOME")
+        FLAVOR=gnome-oem
+        FLAVOR_PRETTY="GNOME OEM"
+        # create package config for GNOME (OEM)
 cat > config/package-lists/desktop.list.chroot <<EOF
 pureos-minimal
 linux-image-$kernel_flavour
@@ -116,14 +139,24 @@ grub-pc
 parted
 python3-parted
 EOF
+      ;;
 
-  rm -f config/hooks/normal/004-setup-oem.hook.chroot
-  cp config/hooks.oem/004-setup-oem.hook.chroot config/hooks/normal/
-  rm -rf config/includes.chroot
-  cp -r config/includes.chroot.oem config/includes.chroot
+      "plasma")
+        FLAVOR=plasma-oem
+        FLAVOR_PRETTY="KDE Plasma OEM"
 
-  rm -rf config/bootloaders/isolinux/
-  cp -r config/bootloaders/isolinux.oem config/bootloaders/isolinux
+        echo "Can not create a OEM installer image for KDE Plasma at time."
+        exit 1
+      ;;
+    esac
+
+    rm -f config/hooks/normal/004-setup-oem.hook.chroot
+    cp config/hooks.oem/004-setup-oem.hook.chroot config/hooks/normal/
+    rm -rf config/includes.chroot
+    cp -r config/includes.chroot.oem config/includes.chroot
+
+    rm -rf config/bootloaders/isolinux/
+    cp -r config/bootloaders/isolinux.oem config/bootloaders/isolinux
   ;;
 esac
 
