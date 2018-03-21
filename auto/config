@@ -117,12 +117,8 @@ EOF
       ;;
     esac
 
-    rm -f config/hooks/normal/004-setup-oem.hook.chroot
-    rm -rf config/includes.chroot
-
     rm -rf config/bootloaders/isolinux
     cp -r config/bootloaders/isolinux.live/ config/bootloaders/isolinux
-    cp -f config/bootloaders/live.cfg.in config/bootloaders/isolinux/
   ;;
 
   "oem")
@@ -133,11 +129,10 @@ EOF
         FLAVOR_PRETTY="GNOME OEM"
         # create package config for GNOME (OEM)
 cat > config/package-lists/desktop.list.chroot <<EOF
-pureos-minimal
+pureos-desktop
 linux-image-$kernel_flavour
+calamares-pureos-oem
 grub-pc
-parted
-python3-parted
 EOF
       ;;
 
@@ -150,15 +145,15 @@ EOF
       ;;
     esac
 
-    rm -f config/hooks/normal/004-setup-oem.hook.chroot
-    cp config/hooks.oem/004-setup-oem.hook.chroot config/hooks/normal/
-    rm -rf config/includes.chroot
-    cp -r config/includes.chroot.oem config/includes.chroot
-
     rm -rf config/bootloaders/isolinux/
     cp -r config/bootloaders/isolinux.oem config/bootloaders/isolinux
   ;;
 esac
+
+# include the live tools
+cat > config/package-lists/live.list.chroot <<EOF
+casper
+EOF
 
 # Configure bootloader
 sed -e s/@VERSION@/"$VERSION_PRETTY"/g config/bootloaders/splash.svg.in > config/bootloaders/splash.svg
@@ -168,6 +163,7 @@ IMAGE_FILENAME=pureos-${dist_version}-${FLAVOR}_${CURRENT_DATE}
 
 lb config noauto \
     --distribution "$dist" \
+    --mode pureos \
     --binary-images iso-hybrid \
     --archive-areas "main" \
     --mirror-bootstrap $PUREOS_REPO \
@@ -182,6 +178,7 @@ lb config noauto \
     --firmware-binary true \
     --firmware-chroot true \
     --initsystem systemd \
+    --initramfs casper \
     --iso-application "PureOS GNU/Linux" \
     --iso-publisher "Purism" \
     --iso-volume "PureOS $dist_version $FLAVOR_PRETTY" \
