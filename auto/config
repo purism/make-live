@@ -117,6 +117,9 @@ EOF
       ;;
     esac
 
+    rm -f config/hooks/normal/004-setup-oem.hook.chroot
+    rm -rf config/includes.chroot
+
     rm -rf config/bootloaders/isolinux
     cp -r config/bootloaders/isolinux.live/ config/bootloaders/isolinux
   ;;
@@ -144,6 +147,9 @@ EOF
         exit 1
       ;;
     esac
+
+    rm -f config/hooks/normal/004-setup-oem.hook.chroot
+    cp config/hooks.oem/004-setup-oem.hook.chroot config/hooks/normal/
 
     rm -rf config/bootloaders/isolinux/
     cp -r config/bootloaders/isolinux.oem config/bootloaders/isolinux

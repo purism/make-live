@@ -1,16 +1,6 @@
 #!/bin/sh
 set -e
 
-OEM_DIR=/var/lib/pureos-oem/
-
-mkdir -p $OEM_DIR
-cd $OEM_DIR
-
-apt install -y ca-certificates
-
-# d-i components
-wget https://repo.pureos.net/pureos/dists/green/main/installer-amd64/current/images/hd-media/gtk/initrd.gz
-wget https://repo.pureos.net/pureos/dists/green/main/installer-amd64/current/images/hd-media/gtk/vmlinuz
-
-# PureOS image
-wget --progress=dot:giga -O pureos.iso https://downloads.puri.sm/live/gnome/2018-01-20/pureos-8.0-gnome-live_20180120-amd64.hybrid.iso
+# hide non-OEM install options from menus
+rm -f /usr/share/applications/calamares.desktop
+rm -f /usr/share/applications/pureos-live-installer.desktop
