@@ -165,6 +165,9 @@ EOF
 sed -e s/@VERSION@/"$VERSION_PRETTY"/g config/bootloaders/splash.svg.in > config/bootloaders/splash.svg
 mv -f config/bootloaders/splash.svg config/bootloaders/isolinux/
 
+# Update GRUB EFI menu for our flavor
+sed -e s/@FLAVOR@/"$FLAVOR"/g config/bootloaders/grub-efi.cfg.in > config/bootloaders/isolinux/grub-efi.cfg
+
 IMAGE_FILENAME=pureos-${dist_version}-${FLAVOR}_${CURRENT_DATE}
 
 lb config noauto \
